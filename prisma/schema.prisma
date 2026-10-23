@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+datasource db {
+  provider  = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  Web
+  Mobile
+}
+
+enum VehicleType {
+  Motorcycle
+  Car
+}
+
+enum FuelType {
+  Gasoline_90
+  Gasoline_92
+  Diesel
+  Electric
+}
+
+enum EmissionCategory {
+  Scope_3
+}
+
+enum GeofenceLabel {
+  Unpad
+  Pribadi
+}
+
+model User {
+  user_id     String       @id @default(uuid())
+  name        String       @db.VarChar(255)
+  email       String       @unique @db.VarChar(100)
+  password    String       @db.Text
+  role        Role         
+  userStudent UserStudent?
+}
+
+model UserStudent {
+  npm             String           @id @db.Char(12)
+  faculty         String           @db.VarChar(255)
+  user_id         String           @unique          
+  user            User             @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  studentVehicles StudentVehicle[]
+}
+
+model StudentVehicle {
+  vehicle_id          String            @id @default(uuid())
+  vehicle_type        VehicleType
+  engine_capacity     Int
+  fuel_type           FuelType
+  emission_multiplier Decimal           @db.Decimal
+  npm                 String            @db.Char(12)
+  student             UserStudent       @relation(fields: [npm], references: [npm], onDelete: Cascade)
+  vehicleActivities   VehicleActivity[]
+}
+
+model VehicleActivity {
+  activity_id         String            @id @default(uuid())
+  vehicle_id          String
+  start_time          DateTime          @db.Timestamp()
+  end_time            DateTime          @db.Timestamp()
+  mileage             Decimal           @db.Decimal
+  produced_emission   Decimal           @db.Decimal
+  start_lat           Decimal           @db.Decimal(10, 8)
+  start_long          Decimal           @db.Decimal(11, 8)
+  end_lat             Decimal           @db.Decimal(10, 8)
+  end_long            Decimal           @db.Decimal(11, 8)
+  emission_category   EmissionCategory  
+  geofence_label      GeofenceLabel
+  studentVehicle      StudentVehicle @relation(fields: [vehicle_id], references: [vehicle_id], onDelete: Cascade)
+}
+
+model Geofence {
+  location_id       String  @id @default(uuid())
+  area_name         String  @db.VarChar(255)
+  polygon_vertices  Json
+}
+
