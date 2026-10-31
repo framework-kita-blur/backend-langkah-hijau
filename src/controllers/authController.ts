@@ -15,17 +15,17 @@ export const loginHandler = async(req: Request, res: Response) => {
 
         // cari user berdasarkan email
         const user = await prisma.user.findUnique({
-            where: {email},
-            include: {userStudent: true},
+            where: { email },
+            include: { userStudent: true },
         });
 
         if (!user) {
-            return res.status(401).json({message: "Email atau password salah! "});
+            return res.status(401).json({ message: "Email atau password salah! " });
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            return res.status(401).json({message: "Email atau password salah! "});
+            return res.status(401).json({ message: "Email atau password salah! " });
         }
 
         // JWT Token
@@ -35,7 +35,7 @@ export const loginHandler = async(req: Request, res: Response) => {
         }
 
         const secret = process.env.JWT_SECRET || 'default_secret';
-        const token = jwt.sign(tokenPayload, secret, {expiresIn:'7d'});
+        const token = jwt.sign(tokenPayload, secret, { expiresIn:'7d' });
 
         return res.status(200).json({
             message: 'Login berhasil!',
@@ -49,6 +49,6 @@ export const loginHandler = async(req: Request, res: Response) => {
             },
         });
     } catch (error:any) {
-        return res.status(400).json({message: 'Format input tidak valid', error:error.error || error.message});
+        return res.status(400).json({ message: 'Format input tidak valid', error: error.errors || error.message });
     }
 };
