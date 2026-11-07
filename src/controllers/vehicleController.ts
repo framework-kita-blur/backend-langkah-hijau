@@ -25,7 +25,7 @@ export const getVehiclesHandler = async (req: Request, res: Response) => {
             message: 'Profil mahasiswa tidak ditemukan' 
         });
 
-        const vehicles = await prisma.userStudent.findMany({
+        const vehicles = await prisma.studentVehicle.findMany({
             where: {
                 npm: student.npm
             }
