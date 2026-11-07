@@ -4,8 +4,6 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { Role } from '@prisma/client'
 import prisma from '../config/prisma';
-import console = require('node:console');
-import error = require('node:console');
 
 const registerSchema = z.object({
     name: z.string().min(3),
@@ -25,7 +23,7 @@ const updatePasswordSchema = z.object({
     new_password: z.string().min(8),
 })
 
-export const registerHandle = async (req: Request, res: Response) => {
+export const registerHandler = async (req: Request, res: Response) => {
     try {
         const data = registerSchema.parse(req.body);
 
