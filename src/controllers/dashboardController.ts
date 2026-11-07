@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import prisma from '../config/prisma';
 
-export const getEmissionSummaryHandler = async (req: Request, res: Response) {
+export const getEmissionSummaryHandler = async (req: Request, res: Response) =>  {
     try {
         // total emisi & jarak tempuh mahasiswa
         const aggregateResult = await prisma.vehicleActivity.aggregate({
@@ -22,6 +22,12 @@ export const getEmissionSummaryHandler = async (req: Request, res: Response) {
             },
         });
 
+        // format ulang geofence agar nilai berupa number
+        const breakdownByGeofence = groupByGeofence.map((item) => ({
+            geofence_label: item.geofence_label,
+            total_emission_kg: Number(item._sum.produced_emission || 0),
+        }));
+
         // ambil seluruh data aktivitas beserta relasi ke kendaraan dan mahasiswa untuk agregasi per fakultas
         const activitiesWithFaculty = await prisma.vehicleActivity.findMany({
             include: {
@@ -34,7 +40,8 @@ export const getEmissionSummaryHandler = async (req: Request, res: Response) {
         });
 
         // grouping & sum emisi per fakultas
-        const facultyMap: { [key: string]: {
+        const facultyMap: { 
+            [key: string]: {
             total_emission: number,
             total_mileage: number,
             total_activities: number,
@@ -68,16 +75,21 @@ export const getEmissionSummaryHandler = async (req: Request, res: Response) {
         }));
 
         return res.status(200).json({ 
+            success: true,
             message: 'Ringkasan data emisi berhasil dimuat',
             summary: {
                 total_activities: aggregateResult._count.activity_id,
                 total_emission_kg: Number(aggregateResult._sum.produced_emission || 0),
                 total_mileage_km: Number(aggregateResult._sum.mileage || 0),
-                breakdown_by_geofence: groupByGeofence,
+                breakdown_by_geofence: breakdownByGeofence,
                 breakdown_by_faculty: breakdownByFaculty,
             },
         });
     } catch (error: any) {
-        return res.status(500).json({ message: 'Gagal memuat data dashboard', error: error.message });
+        return res.status(500).json({ 
+            success: false,
+            message: 'Gagal memuat data dashboard', 
+            error: error.message, 
+        });
     }
 }
