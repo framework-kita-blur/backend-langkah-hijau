@@ -56,6 +56,8 @@ model UserStudent {
 
 model StudentVehicle {
   vehicle_id          String            @id @default(uuid())
+  name                String?           @db.VarChar(255)
+  is_active           Boolean           @default(true)
   vehicle_type        VehicleType
   engine_capacity     Int
   fuel_type           FuelType
