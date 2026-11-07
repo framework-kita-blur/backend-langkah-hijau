@@ -4,11 +4,11 @@ import { EmissionCategory, GeofenceLabel } from '@prisma/client';
 import prisma from '../config/prisma';
 
 const activitySchema = z.object({
-  activity_id: z.string().uuid(), // wajib mengirim UUID untuk idempotensi
+  activity_id: z.string().uuid(),
   vehicle_id: z.string().uuid(),
   start_time: z.string().datetime(),
   end_time: z.string().datetime(),
-  mileage: z.number().nonnegative(), // mengizinkan nilai 0
+  mileage: z.number().nonnegative(),
   produced_emission: z.number().nonnegative(),
   start_lat: z.number().min(-90).max(90),
   start_long: z.number().min(-180).max(180),
@@ -25,54 +25,57 @@ const batchSyncSchema = z.object({
 export const syncActivityBatchHandler = async (req: Request, res: Response) => {
     try {
         const { activities } = batchSyncSchema.parse(req.body);
-        const student = await prisma.userStudentfindUnique({ 
+        
+        // PERBAIKAN: Menambahkan titik (.) pada findUnique
+        const student = await prisma.userStudent.findUnique({ 
             where: { 
                 user_id: req.user?.user_id 
             } 
         });
-    if (!student) return res.status(404).json({ 
-        success: false, 
-        message: 'Profil mahasiswa tidak ditemukan' 
-    });
-
-    const processedIds: string[] = [];
-
-    for (const act of activities) {
-        const vehicle = await prisma.studentVehicle.findFirst({
-            where: {
-                vehicle_id: act.vehicle_id,
-                npm: student.npm
-            },
+        
+        if (!student) return res.status(404).json({ 
+            success: false, 
+            message: 'Profil mahasiswa tidak ditemukan' 
         });
 
-        if (!vehicle) continue;
+        const processedIds: string[] = [];
 
-        await prisma.vehicleActivity.upsert({
-            where: { activity_id: act.activity_id},
-            update: {},
-            create: {
-                activity_id: act.activity_id,
-                vehicle_id: act.vehicle_id,
-                start_time: new Date(act.start_time),
-                end_time: new Date(act.end_time),
-                mileage: act.mileage,
-                produced_emission: act.produced_emission,
-                start_lat: act.start_lat,
-                start_long: act.start_long,
-                end_lat: act.end_lat,
-                end_long: act.end_long,
-                emission_category: act.emission_category,
-                geofence_label: act.geofence_label,
-            },
+        for (const act of activities) {
+            const vehicle = await prisma.studentVehicle.findFirst({
+                where: {
+                    vehicle_id: act.vehicle_id,
+                    npm: student.npm
+                },
+            });
+
+            if (!vehicle) continue;
+
+            await prisma.vehicleActivity.upsert({
+                where: { activity_id: act.activity_id},
+                update: {},
+                create: {
+                    activity_id: act.activity_id,
+                    vehicle_id: act.vehicle_id,
+                    start_time: new Date(act.start_time),
+                    end_time: new Date(act.end_time),
+                    mileage: act.mileage,
+                    produced_emission: act.produced_emission,
+                    start_lat: act.start_lat,
+                    start_long: act.start_long,
+                    end_lat: act.end_lat,
+                    end_long: act.end_long,
+                    emission_category: act.emission_category,
+                    geofence_label: act.geofence_label,
+                },
+            });
+            processedIds.push(act.activity_id);
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Sinkronisasi aktivitas batch berhasil',
+            synced_activity_ids: processedIds,
         });
-        processedIds.push(act.activity_id);
-    }
-
-    return res.status(200).json({
-        success: true,
-        message: 'Sinkronisasi aktivitas batch berhasil',
-        synced_activity_ids: processedIds,
-    });
 
     } catch (error: any) {
         return res.status(400).json({ 
@@ -83,7 +86,7 @@ export const syncActivityBatchHandler = async (req: Request, res: Response) => {
     }
 };
 
-export const getUserActivitiesHandler = async (req: Response, res: Response) => {
+export const getUserActivitiesHandler = async (req: Request, res: Response) => {
     try {
         const student = await prisma.userStudent.findUnique({ 
             where: { 
@@ -144,7 +147,7 @@ export const getActivitySummaryHandler = async (req: Request, res: Response) => 
                 studentVehicle: { npm: student.npm },
                 start_time: { gte: startOfCurrentMonth },
             }
-        })
+        });
 
         const lastMonthActivities = await prisma.vehicleActivity.findMany({
             where: {
@@ -189,4 +192,4 @@ export const getActivitySummaryHandler = async (req: Request, res: Response) => 
             error: error.message 
         });
     }
-}
+};
