@@ -56,11 +56,23 @@ export const createVehicleHandler = async (req: Request, res: Response) => {
         message: 'Profil mahasiswa tidak ditemukan' 
     });
 
-    const vehicle = await prisma.studentVehicle.create({
-        data: {
-            ...data,
-            npm: student.npm,
-        },
+    const isActive = data.is_active ?? false;
+
+    const vehicle = await prisma.$transaction(async (tx) => {
+        if (isActive) {
+            await tx.studentVehicle.updateMany({
+                where: { npm: student.npm },
+                data: { is_active: false},
+            });
+        }
+
+        return tx.studentVehicle.create({
+            data: {
+                ...data,
+                is_active: isActive,
+                npm: student.npm,
+            },
+        });
     });
 
     return res.status(201).json({ 
@@ -94,9 +106,21 @@ export const updateVehicleHandler = async (req: Request, res: Response) => {
             message: 'Kendaraan tidak ditemukan atau bukan milik Anda' 
         });
 
-        const updated = await prisma.studentVehicle.update({
-            where: { vehicle_id: id },
-            data,
+        const updated = await prisma.$transaction(async(tx) => {
+            if (data.is_active === true) {
+                await tx.studentVehicle.updateMany({
+                    where: {
+                        npm: student.npm,
+                        NOT: { vehicle_id: id},
+                    },
+                    data: { is_active: false },
+                });
+            }
+
+            return tx.studentVehicle.update({
+                where: { vehicle_id: id },
+                data,
+            });
         });
 
         return res.status(200).json({ 
