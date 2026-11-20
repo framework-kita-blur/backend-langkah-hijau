@@ -4,11 +4,14 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 
+import { getJwtSecret } from './config/jwt';
 import authRoutes from "./routes/authRoutes";
 import activityRoutes from "./routes/activityRoutes";
 import dashboardRoutes from "./routes/dashboardRoutes";
 import vehicleRoutes from "./routes/vehicleRoutes";
 import geofenceRoutes from "./routes/geofenceRoutes";
+
+getJwtSecret();
 
 const app = express();
 
