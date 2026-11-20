@@ -32,7 +32,7 @@ export const verifyToken = (
     }
 
     try {
-        const secret = getJwtSecret() || 'default_secret';
+        const secret = getJwtSecret();
         const decoded = jwt.verify(token, secret) as JwtPayload;
         req.user = decoded;
         next();
