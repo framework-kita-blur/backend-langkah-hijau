@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import { 
     syncActivityBatchHandler,
     getUserActivitiesHandler,
@@ -9,7 +9,7 @@ import { Role } from '@prisma/client';
 
 const router = Router();
 
-router.post('/sync', verifyToken, requireRole([Role.Mobile]), syncActivityBatchHandler);
+router.post('/sync', express.json({ limit: '100kb' }), verifyToken, requireRole([Role.Mobile]), syncActivityBatchHandler);
 
 router.get('/', verifyToken, requireRole([Role.Mobile]), getUserActivitiesHandler);
 
