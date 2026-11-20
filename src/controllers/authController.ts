@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { Role } from '@prisma/client'
+import { getJwtSecret } from '../config/jwt';
 import prisma from '../config/prisma';
 
 const registerSchema = z.object({
@@ -60,7 +61,7 @@ export const registerHandler = async (req: Request, res: Response) => {
             },
         });
 
-        const token = jwt.sign({ user_id: newUser.user_id, role: newUser.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '7d' });
+        const token = jwt.sign({ user_id: newUser.user_id, role: newUser.role }, getJwtSecret(), { expiresIn: '7d' });
 
         return res.status(201).json({
             success: true,
@@ -90,7 +91,7 @@ export const loginHandler = async(req: Request, res: Response) => {
             return res.status(401).json({ message: "Email atau password salah! " });
         }
 
-        const token = jwt.sign({ user_id: user.user_id, role: user.role }, process.env.JWT_SECRET || "secret", {expiresIn: '7d' });
+        const token = jwt.sign({ user_id: user.user_id, role: user.role }, getJwtSecret(), {expiresIn: '7d' });
 
         return res.status(200).json({
             success: true,
