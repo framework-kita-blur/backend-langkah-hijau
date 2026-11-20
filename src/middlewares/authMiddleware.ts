@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { Role } from '@prisma/client';
+import { getJwtSecret() } from '../config/jwt';
 
 interface JwtPayload {
     user_id: string;
@@ -31,7 +32,7 @@ export const verifyToken = (
     }
 
     try {
-        const secret = process.env.JWT_SECRET || 'default_secret';
+        const secret = getJwtSecret() || 'default_secret';
         const decoded = jwt.verify(token, secret) as JwtPayload;
         req.user = decoded;
         next();
